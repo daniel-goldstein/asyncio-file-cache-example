@@ -17,7 +17,9 @@ async def read_file(session, fname):
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        for _ in range(10_000):
-            await read_file(session, random.choice(fnames))
+        await asyncio.gather(*(
+            read_file(session, random.choice(fnames))
+            for _ in range(10_000)
+        ))
 
 asyncio.get_event_loop().run_until_complete(main())
