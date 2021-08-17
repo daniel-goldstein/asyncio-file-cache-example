@@ -3,8 +3,11 @@ from aiohttp import web
 import os
 import shutil
 import uuid
+from collections import defaultdict
 
 routes = web.RouteTableDef()
+
+file_locks = defaultdict(asyncio.Lock)
 
 shutil.rmtree('cache', ignore_errors=True)
 os.mkdir('cache')
@@ -23,8 +26,9 @@ async def get_file(request):
     filename = request.match_info['filename']
     path = f'cache/{filename}'
 
-    if not os.path.exists(path):
-        await cache_file(path)
+    async with file_locks[path]:
+        if not os.path.exists(path):
+            await cache_file(path)
 
     return web.FileResponse(path)
 
