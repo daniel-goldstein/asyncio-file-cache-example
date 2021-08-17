@@ -1,3 +1,4 @@
+import asyncio
 from aiohttp import web
 import os
 import shutil
@@ -8,9 +9,14 @@ routes = web.RouteTableDef()
 shutil.rmtree('cache', ignore_errors=True)
 os.mkdir('cache')
 
-def cache_file(path):
+async def get_slow_data():
+    await asyncio.sleep(1)
+    return uuid.uuid4().hex
+
+async def cache_file(path):
     with open(path, 'w') as f:
-        f.write(uuid.uuid4().hex)
+        data = await get_slow_data()
+        f.write(data)
 
 @routes.get('/{filename}')
 async def get_file(request):
@@ -18,7 +24,7 @@ async def get_file(request):
     path = f'cache/{filename}'
 
     if not os.path.exists(path):
-        cache_file(path)
+        await cache_file(path)
 
     return web.FileResponse(path)
 
